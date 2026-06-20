@@ -158,7 +158,9 @@ else:
                 updated_df = pd.concat([chat_df, new_row], ignore_index=True)
                 
                 try:
-                    conn.update(data=updated_df)
+                    # UPDATED LINE FOR WRITING DATA SUCCESSFULLY
+                    conn.create(data=updated_df)
+                    st.cache_data.clear() # Clear old cache data to show the new message immediately
                     st.rerun()
                 except Exception as e:
                     st.error("Failed to send message to Google Sheets. Check your configuration.")
