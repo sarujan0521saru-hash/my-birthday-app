@@ -1,2 +1,4 @@
 streamlit-lottie
 requests
+st-gsheets-connection
+pandas
