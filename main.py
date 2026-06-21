@@ -10,7 +10,6 @@ from st_supabase_connection import SupabaseConnection
 
 # Establish Supabase Connection
 try:
-    conn = st.connection("supabase", type=SupabaseConnection)
     # Fetch messages from chat_table and convert to DataFrame
     rows = conn.query("*", table="chat_table", ttl="0s").execute()
     chat_df = pd.DataFrame(rows.data) if rows.data else pd.DataFrame(columns=["sender", "message", "time"])
