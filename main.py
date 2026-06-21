@@ -144,6 +144,8 @@ else:
                         st.markdown(f"👩‍🦰 Akka [{row['time']}]: {row['message']}")
                     else:
                         st.markdown(f"👨‍💻 Ne [{row['time']}]: {row['message']}")
+        sender_title = "Akka" if st.session_state['user_role'] == 'akka' else"Me (Developer)"
+        user_msg = st.text_input(f"send message as *{sender_title}*:", key="chat_input", placeholder="Type a message...")
 
         if st.button("Send ✈️", type="primary"):
             if user_msg.strip() != "":
