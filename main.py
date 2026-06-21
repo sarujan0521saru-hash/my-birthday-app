@@ -9,6 +9,7 @@ st.set_page_config(page_title="Happy Birthday Akkachi! ❤️", page_icon="🎂"
 from st_supabase_connection import SupabaseConnection
 
 # Establish Supabase Connection
+conn = st.connection("supabase", type=SupabaseConnection)
 try:
     # Fetch messages from chat_table and convert to DataFrame
     rows = conn.query("*", table="chat_table", ttl="0s").execute()
