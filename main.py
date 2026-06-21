@@ -6,15 +6,16 @@ import pandas as pd
 
 # Page configuration
 st.set_page_config(page_title="Happy Birthday Akkachi! ❤️", page_icon="🎂", layout="centered")
+from st_supabase_connection import SupabaseConnection
 
-# Establish Google Sheets Connection
-# (We will add the actual link in Streamlit Dashboard secrets later)
+# Establish Supabase Connection
 try:
-    conn = st.connection("gsheets", type=GSheetsConnection)
-    chat_df = conn.read(ttl="0s") # ttl=0s forces it to fetch live data every time
+    conn = st.connection("supabase", type=SupabaseConnection)
+    # Fetch messages from chat_table and convert to DataFrame
+    rows = conn.query("*", table="chat_table", ttl="0s").execute()
+    chat_df = pd.DataFrame(rows.data) if rows.data else pd.DataFrame(columns=["sender", "message", "time"])
 except Exception:
     chat_df = pd.DataFrame(columns=["sender", "message", "time"])
-
 # Function to load Lottie animations safely
 def load_lottieurl(url: str):
     try:
@@ -144,27 +145,18 @@ else:
                     else:
                         st.markdown(f"**👨‍💻 Me [{row['time']}]:** {row['message']}")
                     
-        st.write("---")
-        sender_title = "Akka" if st.session_state['user_role'] == 'akka' else "Me (Developer)"
-        user_msg = st.text_input(f"Send message as **{sender_title}**:", key="chat_input", placeholder="Type a message...")
-        
-        if st.button("Send ✈️", type="primary"):
+      if st.button("Send ✈️", type="primary"):
             if user_msg.strip() != "":
                 current_time = datetime.now().strftime("%H:%M")
                 sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
                 
-                # Append new row to Google Sheet
-                new_row = pd.DataFrame([{"sender": sender_name, "message": user_msg, "time": current_time}])
-                updated_df = pd.concat([chat_df, new_row], ignore_index=True)
-                
+                # Insert new message directly into Supabase Table
                 try:
-                    # UPDATED LINE FOR WRITING DATA SUCCESSFULLY
-                    conn.create(data=updated_df)
-                    st.cache_data.clear() # Clear old cache data to show the new message immediately
+                    conn.table("chat_table").insert([{"sender": sender_name, "message": user_msg, "time": current_time}]).execute()
                     st.rerun()
                 except Exception as e:
-                    st.error("Failed to send message to Google Sheets. Check your configuration.")
-
+                    st.error("Failed to send message to Database.")
+                    
     # Back to Home button
     if st.session_state['page'] != 'home':
         st.write("")
