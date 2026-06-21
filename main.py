@@ -10,7 +10,7 @@ st.set_page_config(page_title="Happy Birthday Akkachi! ❤️", page_icon="🎂"
 # Establish Google Sheets Connection
 # (We will add the actual link in Streamlit Dashboard secrets later)
 try:
-    conn = st.connection("gsheets", type=GSheetsConnection)
+    conn = st.connection("gsheets", type=GSheetsConnection, type_auth="service_account")
     chat_df = conn.read(ttl="0s") # ttl=0s forces it to fetch live data every time
 except Exception:
     chat_df = pd.DataFrame(columns=["sender", "message", "time"])
