@@ -1,4 +1,5 @@
 streamlit-lottie
 requests
-st-gsheets-connection
+supabase
+st-supabase-connection
 pandas
