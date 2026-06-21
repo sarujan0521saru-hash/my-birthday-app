@@ -141,25 +141,17 @@ else:
             else:
                 for index, row in chat_df.iterrows():
                     if row['sender'] == 'Akka':
-                        st.markdown(f"**👩 Akka [{row['time']}]:** {row['message']}")
+                        st.markdown(f"👩‍🦰 Akka [{row['time']}]: {row['message']}")
                     else:
-                        st.markdown(f"**👨‍💻 Me [{row['time']}]:** {row['message']}")
-                    
-      if st.button("Send ✈️", type="primary"):
+                        st.markdown(f"👨‍💻 Ne [{row['time']}]: {row['message']}")
+
+        if st.button("Send ✈️", type="primary"):
             if user_msg.strip() != "":
                 current_time = datetime.now().strftime("%H:%M")
                 sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
                 
-                # Insert new message directly into Supabase Table
                 try:
                     conn.table("chat_table").insert([{"sender": sender_name, "message": user_msg, "time": current_time}]).execute()
                     st.rerun()
                 except Exception as e:
                     st.error("Failed to send message to Database.")
-                    
-    # Back to Home button
-    if st.session_state['page'] != 'home':
-        st.write("")
-        if st.button("🔙 Go Back to Home Page", use_container_width=True):
-            st.session_state['page'] = 'home'
-            st.rerun()
