@@ -156,4 +156,4 @@ else:
                     conn.table("chat_table").insert([{"sender": sender_name, "message": user_msg, "time": current_time}]).execute()
                     st.rerun()
                 except Exception as e:
-                    st.error("Failed to send message to Database.Error: {e}")
+                    st.error(f"Failed to send message to Database.Error: {e}")
