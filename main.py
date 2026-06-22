@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
 from datetime import datetime
-from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
 # Page configuration
