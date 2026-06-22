@@ -135,7 +135,7 @@ elif st.session_state['authenticated']:
         # உங்கள் புகைப்படத்தை அப்லோடு செய்ய வேண்டிய பகுதி
         # "gift_photo.jpg" என்ற பெயரில் உங்கள் போட்டோவை GitHub-இல் அப்லோடு செய்துவிட்டால் அது இங்கே காட்டும்.
         try:
-            st.image("gift_photo.jpg", caption="Happy Birthday Akkachi! 💖", use_container_width=True)
+            st.image("gift_photo.jpeg", caption="Happy Birthday Akkachi! 💖", use_container_width=True)
         except Exception:
             # ஒருவேளை போட்டோ இன்னும் அப்லோடு செய்யப்படவில்லை என்றால் தற்காலிகமாக இந்த ஆன்லைன் போட்டோ காட்டும்.
             st.image("https://images.unsplash.com/photo-1513201099705-a9746e1e201f", caption="Gift Box 🎁", use_container_width=True)
