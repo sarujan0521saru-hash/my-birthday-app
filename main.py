@@ -56,7 +56,7 @@ elif st.session_state['authenticated']:
     
     # Sidebar Navigation (இடது பக்க மெனு)
     st.sidebar.title("Navigation")
-    if st.sidebar.button("🎉 Birthday Wish", use_container_width=True):
+    if st.sidebar.button("🎉 for you Akka", use_container_width=True):
         st.session_state['page'] = 'wish'
         st.rerun()
     if st.sidebar.button("🧩 Quiz Game", use_container_width=True):
@@ -65,7 +65,7 @@ elif st.session_state['authenticated']:
     if st.sidebar.button("💬 Live Chat Room", use_container_width=True):
         st.session_state['page'] = 'live_chat'
         st.rerun()
-    if st.sidebar.button("🎁 Gift", use_container_width=True):  # புதிய Gift பட்டன்
+    if st.sidebar.button("🎁 gift", use_container_width=True):  # புதிய Gift பட்டன்
         st.session_state['page'] = 'gift'
         st.rerun()
         
@@ -79,7 +79,7 @@ elif st.session_state['authenticated']:
     # --- PAGE 2: WISH ---
     if st.session_state['page'] == 'wish':
         st.title("🎉 Happy Birthday Akkachi! 🎂")
-        st.write("happy birthday akka love you 💖")
+        st.write("first happy birthday akka enakku romba pidicha and nan romba nampura person nee ena eapavum happy ahh vachu irunthu irukaa enakku oru kuuda pirantha akka maari ena paathukidda enakku oru pirachanandaa athukku aaruthal thaarathum nee than ena comfert panrathum nee than enda cella akkakku happiest birthday wish 💖")
         if lottie_cake:
             st.components.v1.html(f'<iframe src="https://lottie.host/embed/8ba478b0-b530-4e50-bf6c-67c13cb28188/ecvY38A24J.json" style="border:none; width:100%; height:400px;"></iframe>', height=400)
 
