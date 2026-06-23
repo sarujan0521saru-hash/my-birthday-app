@@ -139,6 +139,7 @@ elif st.session_state['authenticated']:
                 st.error("thappu thappu! 😜")
 
     # --- PAGE 4: LIVE CHAT (Supabase Realtime Chat Method Fixed) ---
+# --- PAGE 4: LIVE CHAT (Supabase Realtime Chat Method - Safe State Fixed) ---
     elif st.session_state['page'] == 'live_chat':
         st.markdown("<h3 style='color: #4a90e2;'>💬 Live Chat Room</h3>", unsafe_allow_html=True)
         st.write("***Chat History:***")
@@ -150,7 +151,7 @@ elif st.session_state['authenticated']:
         
         with chat_container:
             if not db_messages:
-                st.caption("Innum yaarum message seiyala. Neeye muthal msg podu! 👇")
+                st.caption("Innum yaarum message seiyavillai. Neeye muthal msg podu! 👇")
             else:
                 for msg in db_messages:
                     if msg.get('sender') == 'Akka':
@@ -160,7 +161,11 @@ elif st.session_state['authenticated']:
 
         sender_title = "Akka" if st.session_state['user_role'] == 'akka' else "Me (Developer)"
         
-        # Form வடிவமைப்பை நீக்கிவிட்டு, பட்டன் கிளிக்கில் உடனே அப்டேட்டாகும் நேரடி முறை
+        # --- FIX: Form இல்லாமல் மெசேஜ் பாக்ஸை காலி செய்ய உதவும் ஃபங்க்ஷன் ---
+        if 'input_msg_text' not in st.session_state:
+            st.session_state['input_msg_text'] = ""
+
+        # மெசேஜ் அனுப்பும் முக்கிய பகுதி
         user_msg = st.text_input(f"Send message as *{sender_title}*:", key="msg_input_field", placeholder="Type a message...")
         
         if st.button("Send ✈️", type="primary"):
@@ -168,13 +173,13 @@ elif st.session_state['authenticated']:
                 current_time = datetime.now().strftime("%H:%M")
                 sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
                 
-                # முதலாவதாக தரவை அனுப்புதல்
+                # டேட்டாபேஸிற்குள் மெசேஜை அனுப்புதல்
                 success = send_message_to_db(sender_name, user_msg.strip(), current_time)
                 if success:
-                    # மெசேஜ் விழுந்தவுடன் பக்கத்தை உடனடியாக முழுமையாக புதுப்பித்து புதிய தரவை வாசித்தல்
-                    st.rerun()
-
-    # --- PAGE 5: GIFT ---
+                    # மெசேஜ் பாக்ஸை காலி செய்ய அதன் key மதிப்பை மாற்றுதல்
+                    st.session_state['msg_input_field'] = ""
+                    # பக்கத்தை உடனடியாகப் புதுப்பித்தல்
+                    st.rerun()    # --- PAGE 5: GIFT ---
     elif st.session_state['page'] == 'gift':
         st.title("🎁 A Special Gift For You, Akka!")
         try:
