@@ -11,11 +11,6 @@ st.set_page_config(page_title="Happy Birthday Akkachi! ❤️", page_icon="🎂"
 if 'chat_messages' not in st.session_state:
     st.session_state['chat_messages'] = []
 
-# --- HTML/JS LOCAL STORAGE INTEGRATION ---
-# Chat history-ai browser memory-il irundhu padikka udhavi seiyum safe iframe script
-if 'js_loaded' not in st.session_state:
-    st.session_state['js_loaded'] = False
-
 # Function to load Lottie animations safely
 def load_lottieurl(url: str):
     try:
@@ -38,7 +33,7 @@ if 'page' not in st.session_state:
 
 # --- PAGE 1: LOGIN ---
 if st.session_state['page'] == 'login':
-    st.title("🎂 Welcome to Akkachi's Birthday App! 🎈")
+    st.title("🎂 Welcome to Akkachi Birthday App! 🎈")
     st.subheader("Please Login")
     
     password = st.text_input("Enter Password:", type="password")
@@ -55,7 +50,7 @@ if st.session_state['page'] == 'login':
             st.session_state['page'] = 'wish'
             st.rerun()
         else:
-            st.error("thappuuuu")
+            st.error("Thappuuuuuuu.")
 
 # --- IF AUTHENTICATED ---
 elif st.session_state['authenticated']:
@@ -85,14 +80,14 @@ elif st.session_state['authenticated']:
     # --- PAGE 2: WISH ---
     if st.session_state['page'] == 'wish':
         st.title("🎉 Happy Birthday Akkachi! 🎂")
-        st.write("first happy birthday akkachi enakku romba nan romba nampura person nee akka nan alampurathellam keaddu en meala paasam vachu enkuuda pirantha akka maari enna paathu enakku elamave irunthane love you so much akka and i wise for this day was happiest birthday ever and forever your life! 💖")
+        st.write("first happy birthday akkachi enakku romba nan romba nampura person nee akka nan alampurathellam keaddu en meala paasam vachu enkuuda pirantha akka maari enna paathu enakku elamave irunthane love you so much akka and i wise for this day was happiest birthday ever and forever your life!! 💖")
         if lottie_cake:
             st.components.v1.html(f'<iframe src="https://lottie.host/embed/8ba478b0-b530-4e50-bf6c-67c13cb28188/ecvY38A24J.json" style="border:none; width:100%; height:400px;"></iframe>', height=400)
 
     # --- PAGE 3: QUIZ ---
     elif st.session_state['page'] == 'quiz':
         st.title("🧩 Akkachi's Birthday Quiz!")
-        ans1 = st.radio("Question 1: Ammakku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
+        ans1 = st.radio("Question 1: unnakku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
         if st.button("Submit Answers", type="primary"):
             if ans1 == "Me":
                 st.balloons()
@@ -100,12 +95,34 @@ elif st.session_state['authenticated']:
             else:
                 st.error("thappu thappu! 😜")
 
-    # --- PAGE 4: LIVE CHAT (Simple Safe Text Storage Method) ---
+    # --- PAGE 4: LIVE CHAT (100% Safe Local Storage Method) ---
     elif st.session_state['page'] == 'live_chat':
         st.markdown("<h3 style='color: #4a90e2;'>💬 Live Chat Room</h3>", unsafe_allow_html=True)
         st.write("***Chat History:***")
         
-        # UI Container for Messages
+        # ஜாவாஸ்கிரிப்ட் மூலம் பிரவுசர் மெமரியில் இருந்து பழைய மெசேஜ்களைப் படிக்கும் பகுதி
+        # இது பக்கத்தை ரீஃப்ரெஷ் செய்தாலும் மெசேஜ் அழியாமல் பாதுகாக்கும்
+        js_get_code = """
+        <script>
+            const chats = localStorage.getItem('birthday_chat_history') || '[]';
+            if (window.parent && window.parent.postMessage) {
+                window.parent.postMessage({
+                    type: 'streamlit:setComponentValue',
+                    value: chats
+                }, '*');
+            }
+        </script>
+        """
+        # பிரவுசரில் இருந்து பெறப்படும் தரவை வாங்குதல்
+        raw_chats = st.components.v1.html(js_get_code, height=0)
+        
+        # ஒருவேளை லோக்கல் மெமரியில் டேட்டா இருந்தால் அதை சாட் லிஸ்டில் இணைப்போம்
+        if raw_chats and isinstance(raw_chats, str) and raw_chats != '[]':
+            try:
+                st.session_state['chat_messages'] = json.loads(raw_chats)
+            except Exception:
+                pass
+
         chat_container = st.container(height=300)
         
         with chat_container:
@@ -126,14 +143,21 @@ elif st.session_state['authenticated']:
                 current_time = datetime.now().strftime("%H:%M")
                 sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
                 
-                # Append to current session chat
+                # புதிய மெசேஜை செஷனில் சேர்த்தல்
                 st.session_state['chat_messages'].append({
                     "sender": sender_name,
                     "message": user_msg,
                     "time": current_time
                 })
                 
-                # Refresh input field box
+                # பிரவுசரின் சொந்த Local Storage மெமரியில் மெசேஜ்களைப் பத்திரமாகச் சேமிக்கும் பகுதி
+                clean_json = json.dumps(st.session_state['chat_messages']).replace("'", "\\'")
+                js_save = f"""
+                <script>
+                    localStorage.setItem('birthday_chat_history', '{clean_json}');
+                </script>
+                """
+                st.components.v1.html(js_save, height=0)
                 st.rerun()
 
     # --- PAGE 5: GIFT ---
