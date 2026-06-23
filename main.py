@@ -7,15 +7,14 @@ import json
 # Page configuration
 st.set_page_config(page_title="Happy Birthday Akkachi! ❤️", page_icon="🎂", layout="centered")
 
-# --- JAVASCRIPT LOCAL STORAGE MANAGEMENT ---
-# பிரவுசர் மெமரியில் இருந்து சாட்டைப் படிக்கவும் எழுதவும் உதவும் எளிய JS கம்போனென்ட்
-
-
-st.components.v1.html(js_code, height=0)
-
 # Initialize Session State for Chat History
 if 'chat_messages' not in st.session_state:
     st.session_state['chat_messages'] = []
+
+# --- HTML/JS LOCAL STORAGE INTEGRATION ---
+# Chat history-ai browser memory-il irundhu padikka udhavi seiyum safe iframe script
+if 'js_loaded' not in st.session_state:
+    st.session_state['js_loaded'] = False
 
 # Function to load Lottie animations safely
 def load_lottieurl(url: str):
@@ -56,14 +55,14 @@ if st.session_state['page'] == 'login':
             st.session_state['page'] = 'wish'
             st.rerun()
         else:
-            st.error("thappuuuuuuuuu")
+            st.error("thappuuuu")
 
 # --- IF AUTHENTICATED ---
 elif st.session_state['authenticated']:
     
     # Sidebar Navigation
     st.sidebar.title("Navigation")
-    if st.sidebar.button("🎉 for my akkachiiii", use_container_width=True):
+    if st.sidebar.button("🎉 for my akka", use_container_width=True):
         st.session_state['page'] = 'wish'
         st.rerun()
     if st.sidebar.button("🧩 Quiz Game", use_container_width=True):
@@ -86,7 +85,7 @@ elif st.session_state['authenticated']:
     # --- PAGE 2: WISH ---
     if st.session_state['page'] == 'wish':
         st.title("🎉 Happy Birthday Akkachi! 🎂")
-        st.write("first happy birthday akka nee life full ah happy ah irukkanum enaku rompa pidicha nan romba nampura person nee akka nan ena alampinaalum keaddu kondu enakku sappadu theethi viddu nan kavalaila iruntha athukkum aaruthal solli enakku kuuda pirantha akka maari ena pathu kidda ovve you sooo much akka and happiest birthday for you! 💖")
+        st.write("first happy birthday akkachi enakku romba nan romba nampura person nee akka nan alampurathellam keaddu en meala paasam vachu enkuuda pirantha akka maari enna paathu enakku elamave irunthane love you so much akka and i wise for this day was happiest birthday ever and forever your life! 💖")
         if lottie_cake:
             st.components.v1.html(f'<iframe src="https://lottie.host/embed/8ba478b0-b530-4e50-bf6c-67c13cb28188/ecvY38A24J.json" style="border:none; width:100%; height:400px;"></iframe>', height=400)
 
@@ -97,38 +96,21 @@ elif st.session_state['authenticated']:
         if st.button("Submit Answers", type="primary"):
             if ans1 == "Me":
                 st.balloons()
-                st.success("good girl ❤️✨")
+                st.success("good girl! ❤️✨")
             else:
                 st.error("thappu thappu! 😜")
 
-    # --- PAGE 4: LIVE CHAT (Safe Local Storage Method) ---
-# --- PAGE 4: LIVE CHAT (Simple Safe JavaScript Storage) ---
+    # --- PAGE 4: LIVE CHAT (Simple Safe Text Storage Method) ---
     elif st.session_state['page'] == 'live_chat':
         st.markdown("<h3 style='color: #4a90e2;'>💬 Live Chat Room</h3>", unsafe_allow_html=True)
         st.write("***Chat History:***")
         
-        # ஜாவாஸ்கிரிப்ட் மூலம் பிரவுசர் மெமரியில் இருந்து மெசேஜ்களை செஷன் ஸ்டேட்டிற்குள் கொண்டு வரும் எளிய தந்திரம்
-        import streamlit.components.v1 as components
-        
-        # 1. பிரவுசரில் மெசேஜ் இருந்தால் அதை எடுக்க ஒரு மறைமுக பட்டன்
-        if 'js_loaded' not in st.session_state:
-            js_script = """
-            <script>
-                const data = localStorage.getItem('birthday_chat_history') || '[]';
-                window.parent.postMessage({
-                    type: 'streamlit:setComponentValue',
-                    value: data
-                }, '*');
-            </script>
-            """
-            components.html(js_script, height=0)
-            st.session_state['js_loaded'] = True
-            
+        # UI Container for Messages
         chat_container = st.container(height=300)
         
         with chat_container:
             if not st.session_state['chat_messages']:
-                st.caption("neeye muthal msg poodu")
+                st.caption("Innum yaarum message seiyavillai. Neeye muthal msg podu! 👇")
             else:
                 for msg in st.session_state['chat_messages']:
                     if msg['sender'] == 'Akka':
@@ -144,17 +126,14 @@ elif st.session_state['authenticated']:
                 current_time = datetime.now().strftime("%H:%M")
                 sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
                 
-                # புதிய மெசேஜை லிஸ்டில் சேர்த்தல்
+                # Append to current session chat
                 st.session_state['chat_messages'].append({
                     "sender": sender_name,
                     "message": user_msg,
                     "time": current_time
                 })
                 
-                # பிரவுசரின் சொந்த Local Storage-இல் ஜாவாஸ்கிரிப்ட் மூலம் நேரடியாக சேமித்தல்
-                clean_json = json.dumps(st.session_state['chat_messages']).replace("'", "\\'")
-                js_save = f"<script>localStorage.setItem('birthday_chat_history', '{clean_json}');</script>"
-                components.html(js_save, height=0)
+                # Refresh input field box
                 st.rerun()
 
     # --- PAGE 5: GIFT ---
