@@ -24,9 +24,9 @@ headers = {
 
 # --- DATABASE FUNCTIONS ---
 
-# டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் ஃபங்க்ஷன் (400 Error Fixed)
+
 def fetch_messages():
-    # Supabase எரர் தவிர்க்க nocache பராமீட்டர் நீக்கப்பட்டுள்ளது
+
     url = f"{SUPABASE_URL}/rest/v1/chat_table?select=sender,message,time&order=id.asc"
     try:
         live_headers = headers.copy()
@@ -41,7 +41,6 @@ def fetch_messages():
     except Exception:
         return []
 
-# டேட்டாவைச் சேர்க்கும் ஃபங்க்ஷன் 
 def send_message_to_db(sender, message, time_str):
     url = f"{SUPABASE_URL}/rest/v1/chat_table"
     data = {
@@ -133,7 +132,7 @@ elif st.session_state['authenticated']:
     # --- PAGE 3: QUIZ ---
     elif st.session_state['page'] == 'quiz':
         st.title("🧩 Akkachi's Birthday Quiz!")
-        ans1 = st.radio("Question 1: Ammakku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
+        ans1 = st.radio("Question 1: unnakku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
         if st.button("Submit Answers", type="primary"):
             if ans1 == "Me":
                 st.balloons()
@@ -146,7 +145,7 @@ elif st.session_state['authenticated']:
         st.markdown("<h3 style='color: #4a90e2;'>💬 Live Chat Room</h3>", unsafe_allow_html=True)
         st.write("***Chat History:***")
         
-        # Supabase டேட்டாவை வாசித்தல்
+        
         db_messages = fetch_messages()
         
         chat_container = st.container(height=300)
@@ -162,8 +161,8 @@ elif st.session_state['authenticated']:
                         st.markdown(f"**👨‍💻 Me [{msg.get('time', '')}]:** {msg.get('message', '')}")
 
         sender_title = "Akka" if st.session_state['user_role'] == 'akka' else "Me (Developer)"
+
         
-        # மெசேஜ் அனுப்பும் படிவம்
         with st.form(key="chat_form_clean", clear_on_submit=True):
             user_msg = st.text_input(f"Send message as *{sender_title}*:", placeholder="Type a message...")
             submit_button = st.form_submit_button(label="Send ✈️", type="primary")
@@ -175,7 +174,7 @@ elif st.session_state['authenticated']:
                     
                     success = send_message_to_db(sender_name, user_msg.strip(), current_time)
                     if success:
-                        # பக்கத்தை உடனடியாகப் புதுப்பித்தல்
+        
                         st.rerun()
 
     # --- PAGE 5: GIFT ---
