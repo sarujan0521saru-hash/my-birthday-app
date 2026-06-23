@@ -24,10 +24,10 @@ headers = {
 
 # --- DATABASE FUNCTIONS ---
 
-# டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் புதிய ஃபங்க்ஷன் (DEBUG Mode)
+# டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் ஃபங்க்ஷன் (400 Error Fixed)
 def fetch_messages():
-    unique_time = str(time.time()).replace(".", "")
-    url = f"{SUPABASE_URL}/rest/v1/chat_table?select=sender,message,time&order=id.asc&nocache={unique_time}"
+    # Supabase எரர் தவிர்க்க nocache பராமீட்டர் நீக்கப்பட்டுள்ளது
+    url = f"{SUPABASE_URL}/rest/v1/chat_table?select=sender,message,time&order=id.asc"
     try:
         live_headers = headers.copy()
         live_headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -37,12 +37,8 @@ def fetch_messages():
         response = requests.get(url, headers=live_headers, timeout=5)
         if response.status_code == 200:
             return response.json()
-        else:
-            # டேட்டாவை வாசிப்பதில் எரர் இருந்தால் திரையில் காட்டும்
-            st.warning(f"Fetch Error: {response.status_code} - {response.text}")
-            return []
-    except Exception as e:
-        st.error(f"Fetch Connection Error: {e}")
+        return []
+    except Exception:
         return []
 
 # டேட்டாவைச் சேர்க்கும் ஃபங்க்ஷன் 
@@ -57,11 +53,8 @@ def send_message_to_db(sender, message, time_str):
         response = requests.post(url, headers=headers, json=data, timeout=5)
         if response.status_code in [200, 201]:
             return True
-        else:
-            st.error(f"Database Reject பண்ணுகிறது: {response.text}")
-            return False
-    except Exception as e:
-        st.error(f"Network Error: {e}")
+        return False
+    except Exception:
         return False
 
 # Function to load Lottie animations safely
@@ -156,9 +149,6 @@ elif st.session_state['authenticated']:
         # Supabase டேட்டாவை வாசித்தல்
         db_messages = fetch_messages()
         
-        # DEBUG: டேட்டாபேஸிலிருந்து என்ன கிடைக்கிறது என்பதைத் திரையில் பார்க்க உதவும் வரி
-        st.write("Debug - Database Messages Found:", db_messages)
-        
         chat_container = st.container(height=300)
         
         with chat_container:
@@ -173,7 +163,8 @@ elif st.session_state['authenticated']:
 
         sender_title = "Akka" if st.session_state['user_role'] == 'akka' else "Me (Developer)"
         
-        with st.form(key="chat_form_fixed", clear_on_submit=True):
+        # மெசேஜ் அனுப்பும் படிவம்
+        with st.form(key="chat_form_clean", clear_on_submit=True):
             user_msg = st.text_input(f"Send message as *{sender_title}*:", placeholder="Type a message...")
             submit_button = st.form_submit_button(label="Send ✈️", type="primary")
             
@@ -184,7 +175,7 @@ elif st.session_state['authenticated']:
                     
                     success = send_message_to_db(sender_name, user_msg.strip(), current_time)
                     if success:
-                        time.sleep(1)
+                        # பக்கத்தை உடனடியாகப் புதுப்பித்தல்
                         st.rerun()
 
     # --- PAGE 5: GIFT ---
