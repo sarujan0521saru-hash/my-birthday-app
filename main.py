@@ -23,18 +23,26 @@ headers = {
 }
 
 # டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் ஃபங்க்ஷன் (Cache மெமரி முற்றிலும் தவிர்க்கப்பட்டுள்ளது)
+# டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் புதிய ஃபங்க்ஷன் (உடனடி அப்டேட் முறை)
 def fetch_messages():
-    # பிரவுசர்/ஸ்ட்ரீம்லிட் பழைய தரவைக் காட்டாமல் இருக்க ஒவ்வொரு முறையும் ஒரு தனித்துவமான நேரக்குறியீடு (Timestamp) சேர்க்கப்படுகிறது
-    unique_time = str(time.time()).replace(".", "")
-    url = f"{SUPABASE_URL}/rest/v1/chat_table?select=sender,message,time&order=id.asc&nocache={unique_time}"
+    import time
+    # பிரவுசர் அல்லது ஸ்ட்ரீம்லிட் பழைய தரவைக் காட்டாமல் இருக்க ஒவ்வொரு முறையும் ஒரு தனித்துவமான நேரக்குறியீடு (Timestamp) சேர்க்கப்படுகிறது
+    nocache_url_param = str(time.time()).replace(".", "")
+    url = f"{SUPABASE_URL}/rest/v1/chat_table?select=sender,message,time&order=id.asc&nocache={nocache_url_param}"
     try:
-        response = requests.get(url, headers=headers, timeout=5)
+        # headers இல் Cache-Control ஐச் சேர்த்து பிரெஷ்ஷான டேட்டாவை வரவழைக்கிறோம்
+        live_headers = headers.copy()
+        live_headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        live_headers["Pragma"] = "no-cache"
+        live_headers["Expires"] = "0"
+        
+        response = requests.get(url, headers=live_headers, timeout=5)
         if response.status_code == 200:
             return response.json()
         return []
     except Exception:
         return []
-
+        
 # டேட்டாவைச் சேர்க்கும் ஃபங்க்ஷன் 
 def send_message_to_db(sender, message, time_str):
     url = f"{SUPABASE_URL}/rest/v1/chat_table"
