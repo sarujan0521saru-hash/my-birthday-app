@@ -22,46 +22,25 @@ headers = {
     "Prefer": "return=representation"
 }
 
-# டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் ஃபங்க்ஷன் (Cache மெமரி முற்றிலும் தவிர்க்கப்பட்டுள்ளது)
-# --- PAGE 4: LIVE CHAT (Supabase Realtime Chat Method - Sync Delay Fixed) ---
-    elif st.session_state['page'] == 'live_chat':
-        st.markdown("<h3 style='color: #4a90e2;'>💬 Live Chat Room</h3>", unsafe_allow_html=True)
-        st.write("***Chat History:***")
-        
-        # Supabase டேட்டாவை வாசித்தல்
-        db_messages = fetch_messages()
-        
-        chat_container = st.container(height=300)
-        
-        with chat_container:
-            if not db_messages:
-                st.caption("Innum yaarum message seiyavillai. Neeye muthal msg podu! 👇")
-            else:
-                for msg in db_messages:
-                    if msg.get('sender') == 'Akka':
-                        st.markdown(f"**👩‍🦰 Akka [{msg.get('time', '')}]:** {msg.get('message', '')}")
-                    else:
-                        st.markdown(f"**👨‍💻 Me [{msg.get('time', '')}]:** {msg.get('message', '')}")
+# --- DATABASE FUNCTIONS ---
 
-        sender_title = "Akka" if st.session_state['user_role'] == 'akka' else "Me (Developer)"
+# டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் புதிய ஃபங்க்ஷன் (Cache-Control சேர்க்கப்பட்டுள்ளது)
+def fetch_messages():
+    unique_time = str(time.time()).replace(".", "")
+    url = f"{SUPABASE_URL}/rest/v1/chat_table?select=sender,message,time&order=id.asc&nocache={unique_time}"
+    try:
+        live_headers = headers.copy()
+        live_headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        live_headers["Pragma"] = "no-cache"
+        live_headers["Expires"] = "0"
         
-        # Form வடிவமைப்பு மூலம் மெசேஜ் அனுப்புதல்
-        with st.form(key="chat_form_final_sync", clear_on_submit=True):
-            user_msg = st.text_input(f"Send message as *{sender_title}*:", placeholder="Type a message...")
-            submit_button = st.form_submit_button(label="Send ✈️", type="primary")
-            
-            if submit_button:
-                if user_msg and user_msg.strip() != "":
-                    current_time = datetime.now().strftime("%H:%M")
-                    sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
-                    
-                    # Supabase டேட்டாபேஸிற்குள் மெசேஜை அனுப்புதல்
-                    success = send_message_to_db(sender_name, user_msg.strip(), current_time)
-                    if success:
-                        # --- FIX: Supabase-இல் டேட்டா விழ 1 செகண்ட் டைம் கொடுத்துவிட்டு பக்கத்தை ரீபிரெஷ் செய்தல் ---
-                        import time
-                        time.sleep(1)
-                        st.rerun()        
+        response = requests.get(url, headers=live_headers, timeout=5)
+        if response.status_code == 200:
+            return response.json()
+        return []
+    except Exception:
+        return []
+
 # டேட்டாவைச் சேர்க்கும் ஃபங்க்ஷன் 
 def send_message_to_db(sender, message, time_str):
     url = f"{SUPABASE_URL}/rest/v1/chat_table"
@@ -165,13 +144,12 @@ elif st.session_state['authenticated']:
             else:
                 st.error("thappu thappu! 😜")
 
-    # --- PAGE 4: LIVE CHAT (Supabase Realtime Chat Method Fixed) ---
-# --- PAGE 4: LIVE CHAT (Supabase Realtime Chat Method - Final Fixed Form) ---
+    # --- PAGE 4: LIVE CHAT ---
     elif st.session_state['page'] == 'live_chat':
         st.markdown("<h3 style='color: #4a90e2;'>💬 Live Chat Room</h3>", unsafe_allow_html=True)
         st.write("***Chat History:***")
         
-        # Supabase டேட்டாவை புதிய முறையில் வாசித்தல்
+        # Supabase டேட்டாவை வாசித்தல்
         db_messages = fetch_messages()
         
         chat_container = st.container(height=300)
@@ -188,7 +166,7 @@ elif st.session_state['authenticated']:
 
         sender_title = "Akka" if st.session_state['user_role'] == 'akka' else "Me (Developer)"
         
-        # --- 100% எரர் இல்லாத Form முறை (clear_on_submit பாக்ஸை காலி செய்யும்) ---
+        # 100% சரியான Form சீரமைப்பு (Network Latency சரிசெய்ய 1 செகண்ட் தங்குதல் சேர்க்கப்பட்டுள்ளது)
         with st.form(key="chat_form_fixed", clear_on_submit=True):
             user_msg = st.text_input(f"Send message as *{sender_title}*:", placeholder="Type a message...")
             submit_button = st.form_submit_button(label="Send ✈️", type="primary")
@@ -201,9 +179,11 @@ elif st.session_state['authenticated']:
                     # டேட்டாபேஸிற்குள் மெசேஜை அனுப்புதல்
                     success = send_message_to_db(sender_name, user_msg.strip(), current_time)
                     if success:
-                        # பக்கத்தை உடனடியாகப் புதுப்பித்தல் (உடனே மேலே மெசேஜ் காட்டும்)
+                        # Supabase-இல் விழுந்தவுடன் உடனே காட்ட 1 செகண்ட் தாமதித்து ரீரன் செய்தல்
+                        time.sleep(1)
                         st.rerun()
-        # --- PAGE 5: GIFT ---
+
+    # --- PAGE 5: GIFT ---
     elif st.session_state['page'] == 'gift':
         st.title("🎁 A Special Gift For You, Akka!")
         try:
