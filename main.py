@@ -7,7 +7,6 @@ import pandas as pd
 st.set_page_config(page_title="Happy Birthday Akkachi! ❤️", page_icon="🎂", layout="centered")
 
 # --- SUPABASE REST API CONFIGURATION ---
-# Secrets இல் இருந்து விபரங்களைப் பாதுகாப்பாக எடுத்தல்
 try:
     SUPABASE_URL = st.secrets["SUPABASE_URL"]
     SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -22,11 +21,9 @@ headers = {
     "Prefer": "return=representation"
 }
 
-# டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் ஃபங்க்ஷன் (No Error Method)
 # டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் ஃபங்க்ஷன் (Table Name Fixed)
 def fetch_messages():
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    # இங்கிருந்த chats என்பதை chat_table என்று மாற்றியுள்ளோம்
     url = f"{SUPABASE_URL}/rest/v1/chat_table?select=sender,message,time&order=id.asc&t={timestamp}"
     try:
         response = requests.get(url, headers=headers, timeout=5)
@@ -36,9 +33,8 @@ def fetch_messages():
     except Exception:
         return []
 
-# டேட்டாவைச் சேர்க்கும் ஃபங்க்ஷன் (Table Name Fixed)
+# டேட்டாவைச் சேர்க்கும் ஃபங்க்ஷன் (Syntax Error மற்றும் Table Name முற்றிலும் சரிசெய்யப்பட்டது)
 def send_message_to_db(sender, message, time_str):
-    # இங்கிருந்த chats என்பதை chat_table என்று மாற்றியுள்ளோம்
     url = f"{SUPABASE_URL}/rest/v1/chat_table"
     data = {
         "sender": sender,
@@ -54,9 +50,8 @@ def send_message_to_db(sender, message, time_str):
             return False
     except Exception as e:
         st.error(f"Network Error: {e}")
-        return False    except Exception as e:
-        st.error(f"Network Error: {e}")
         return False
+
 # Function to load Lottie animations safely
 def load_lottieurl(url: str):
     try:
@@ -79,7 +74,7 @@ if 'page' not in st.session_state:
 
 # --- PAGE 1: LOGIN ---
 if st.session_state['page'] == 'login':
-    st.title("🎂 Welcome to Akkachi Birthday App! 🎈")
+    st.title("🎂 Welcome to Akkachi's Birthday App! 🎈")
     st.subheader("Please Login")
     
     password = st.text_input("Enter Password:", type="password")
@@ -96,14 +91,14 @@ if st.session_state['page'] == 'login':
             st.session_state['page'] = 'wish'
             st.rerun()
         else:
-            st.error("Thappuuuuuuuuuuuuuuuuuu.")
+            st.error("Thappான Password! சரியான பாஸ்வேர்டை உள்ளிடவும்.")
 
 # --- IF AUTHENTICATED ---
 elif st.session_state['authenticated']:
     
     # Sidebar Navigation
     st.sidebar.title("Navigation")
-    if st.sidebar.button("🎉 for my akka", use_container_width=True):
+    if st.sidebar.button("🎉 for my sister", use_container_width=True):
         st.session_state['page'] = 'wish'
         st.rerun()
     if st.sidebar.button("🧩 Quiz Game", use_container_width=True):
@@ -133,21 +128,20 @@ elif st.session_state['authenticated']:
     # --- PAGE 3: QUIZ ---
     elif st.session_state['page'] == 'quiz':
         st.title("🧩 Akkachi's Birthday Quiz!")
-        ans1 = st.radio("Question 1: Ammakku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
+        ans1 = st.radio("Question 1: unnakku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
         if st.button("Submit Answers", type="primary"):
             if ans1 == "Me":
                 st.balloons()
-                st.success("Amazing! All answers are absolutely correct! ❤️✨")
+                st.success("good girl! ❤️✨")
             else:
                 st.error("thappu thappu! 😜")
 
     # --- PAGE 4: LIVE CHAT (Supabase Realtime Chat Method) ---
-# --- PAGE 4: LIVE CHAT (Supabase Realtime Chat Method - Fixed Form) ---
     elif st.session_state['page'] == 'live_chat':
         st.markdown("<h3 style='color: #4a90e2;'>💬 Live Chat Room</h3>", unsafe_allow_html=True)
         st.write("***Chat History:***")
         
-        # Supabase டேட்டாபேஸில் இருந்து லைவ்வாக மெசேஜ்களைப் படித்தல்
+        # Supabase டேட்டாவை வாசித்தல்
         db_messages = fetch_messages()
         
         chat_container = st.container(height=300)
@@ -157,14 +151,14 @@ elif st.session_state['authenticated']:
                 st.caption("Innum yaarum message seiyavillai. Neeye muthal msg podu! 👇")
             else:
                 for msg in db_messages:
-                    if msg['sender'] == 'Akka':
-                        st.markdown(f"**👩‍🦰 Akka [{msg['time']}]:** {msg['message']}")
+                    if msg.get('sender') == 'Akka':
+                        st.markdown(f"**👩‍🦰 Akka [{msg.get('time', '')}]:** {msg.get('message', '')}")
                     else:
-                        st.markdown(f"**👨‍💻 Me [{msg['time']}]:** {msg['message']}")
+                        st.markdown(f"**👨‍💻 Me [{msg.get('time', '')}]:** {msg.get('message', '')}")
 
         sender_title = "Akka" if st.session_state['user_role'] == 'akka' else "Me (Developer)"
         
-        # --- FIX: Streamlit Form ஐப் பயன்படுத்தி டேட்டாவை பத்திரப்படுத்துதல் ---
+        # Form வடிவமைப்பு மூலம் மெசேஜ் அனுப்புதல்
         with st.form(key="chat_form", clear_on_submit=True):
             user_msg = st.text_input(f"Send message as *{sender_title}*:", placeholder="Type a message...")
             submit_button = st.form_submit_button(label="Send ✈️", type="primary")
@@ -174,9 +168,10 @@ elif st.session_state['authenticated']:
                     current_time = datetime.now().strftime("%H:%M")
                     sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
                     
-                    # புதிய மெசேஜை Supabase ஆன்லைன் டேட்டாபேஸிற்குள் அனுப்புதல்
+                    # Supabase `chat_table` டேபிளுக்குள் விழுவதை உறுதி செய்தல்
                     send_message_to_db(sender_name, user_msg.strip(), current_time)
                     st.rerun()
+
     # --- PAGE 5: GIFT ---
     elif st.session_state['page'] == 'gift':
         st.title("🎁 A Special Gift For You, Akkachi!")
