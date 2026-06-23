@@ -2,13 +2,24 @@ import streamlit as st
 import requests
 from datetime import datetime
 import pandas as pd
+import json
+from streamlit_local_storage import StLocalStorage
 
 # Page configuration
 st.set_page_config(page_title="Happy Birthday Akkachi! ❤️", page_icon="🎂", layout="centered")
 
 # Initialize Session State for Chat History if it doesn't exist
-if 'chat_messages' not in st.session_state:
-    st.session_state['chat_messages'] = []
+local_storage = StLocalStorage()
+
+stored_chats = local_storage.get_item("chat_history")
+if stored_chat is not None and stored_chat != "":
+    try:
+        st.session_state['chat_messages'] = json.loads(stored_chats)
+    except Exception:
+        st.session_state['chat_messages'] = []
+else:
+    if 'chat_messages' not in st.session_state:
+        st.session_state['chat_messages'] = []
 
 # Function to load Lottie animations safely
 def load_lottieurl(url: str):
@@ -125,6 +136,7 @@ elif st.session_state['authenticated']:
                     "message": user_msg,
                     "time": current_time
                 })
+                local_storage.set_item("chat_history", json.dumps(st.session_state['chat_messages']))
                 st.rerun()
 
     # --- PAGE 5: GIFT (புதிய பக்கம்) ---
