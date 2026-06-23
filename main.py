@@ -24,7 +24,7 @@ headers = {
 
 # --- DATABASE FUNCTIONS ---
 
-# டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் புதிய ஃபங்க்ஷன் (Cache-Control சேர்க்கப்பட்டுள்ளது)
+# டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் புதிய ஃபங்க்ஷன் (DEBUG Mode)
 def fetch_messages():
     unique_time = str(time.time()).replace(".", "")
     url = f"{SUPABASE_URL}/rest/v1/chat_table?select=sender,message,time&order=id.asc&nocache={unique_time}"
@@ -37,8 +37,12 @@ def fetch_messages():
         response = requests.get(url, headers=live_headers, timeout=5)
         if response.status_code == 200:
             return response.json()
-        return []
-    except Exception:
+        else:
+            # டேட்டாவை வாசிப்பதில் எரர் இருந்தால் திரையில் காட்டும்
+            st.warning(f"Fetch Error: {response.status_code} - {response.text}")
+            return []
+    except Exception as e:
+        st.error(f"Fetch Connection Error: {e}")
         return []
 
 # டேட்டாவைச் சேர்க்கும் ஃபங்க்ஷன் 
@@ -152,6 +156,9 @@ elif st.session_state['authenticated']:
         # Supabase டேட்டாவை வாசித்தல்
         db_messages = fetch_messages()
         
+        # DEBUG: டேட்டாபேஸிலிருந்து என்ன கிடைக்கிறது என்பதைத் திரையில் பார்க்க உதவும் வரி
+        st.write("Debug - Database Messages Found:", db_messages)
+        
         chat_container = st.container(height=300)
         
         with chat_container:
@@ -166,7 +173,6 @@ elif st.session_state['authenticated']:
 
         sender_title = "Akka" if st.session_state['user_role'] == 'akka' else "Me (Developer)"
         
-        # 100% சரியான Form சீரமைப்பு (Network Latency சரிசெய்ய 1 செகண்ட் தங்குதல் சேர்க்கப்பட்டுள்ளது)
         with st.form(key="chat_form_fixed", clear_on_submit=True):
             user_msg = st.text_input(f"Send message as *{sender_title}*:", placeholder="Type a message...")
             submit_button = st.form_submit_button(label="Send ✈️", type="primary")
@@ -176,10 +182,8 @@ elif st.session_state['authenticated']:
                     current_time = datetime.now().strftime("%H:%M")
                     sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
                     
-                    # டேட்டாபேஸிற்குள் மெசேஜை அனுப்புதல்
                     success = send_message_to_db(sender_name, user_msg.strip(), current_time)
                     if success:
-                        # Supabase-இல் விழுந்தவுடன் உடனே காட்ட 1 செகண்ட் தாமதித்து ரீரன் செய்தல்
                         time.sleep(1)
                         st.rerun()
 
