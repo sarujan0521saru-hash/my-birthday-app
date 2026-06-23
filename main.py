@@ -133,6 +133,7 @@ elif st.session_state['authenticated']:
                 st.error("thappu thappu! 😜")
 
     # --- PAGE 4: LIVE CHAT (Supabase Realtime Chat Method) ---
+# --- PAGE 4: LIVE CHAT (Supabase Realtime Chat Method - Fixed Form) ---
     elif st.session_state['page'] == 'live_chat':
         st.markdown("<h3 style='color: #4a90e2;'>💬 Live Chat Room</h3>", unsafe_allow_html=True)
         st.write("***Chat History:***")
@@ -153,17 +154,20 @@ elif st.session_state['authenticated']:
                         st.markdown(f"**👨‍💻 Me [{msg['time']}]:** {msg['message']}")
 
         sender_title = "Akka" if st.session_state['user_role'] == 'akka' else "Me (Developer)"
-        user_msg = st.text_input(f"Send message as *{sender_title}*:", key="chat_input", placeholder="Type a message...")
-
-        if st.button("Send ✈️", type="primary"):
-            if user_msg.strip() != "":
-                current_time = datetime.now().strftime("%H:%M")
-                sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
-                
-                # புதிய மெசேஜை Supabase ஆன்லைன் டேட்டாபேஸிற்குள் பத்திரமாகச் சேமித்தல்
-                send_message_to_db(sender_name, user_msg, current_time)
-                st.rerun()
-
+        
+        # --- FIX: Streamlit Form ஐப் பயன்படுத்தி டேட்டாவை பத்திரப்படுத்துதல் ---
+        with st.form(key="chat_form", clear_on_submit=True):
+            user_msg = st.text_input(f"Send message as *{sender_title}*:", placeholder="Type a message...")
+            submit_button = st.form_submit_button(label="Send ✈️", type="primary")
+            
+            if submit_button:
+                if user_msg and user_msg.strip() != "":
+                    current_time = datetime.now().strftime("%H:%M")
+                    sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
+                    
+                    # புதிய மெசேஜை Supabase ஆன்லைன் டேட்டாபேஸிற்குள் அனுப்புதல்
+                    send_message_to_db(sender_name, user_msg.strip(), current_time)
+                    st.rerun()
     # --- PAGE 5: GIFT ---
     elif st.session_state['page'] == 'gift':
         st.title("🎁 A Special Gift For You, Akkachi!")
