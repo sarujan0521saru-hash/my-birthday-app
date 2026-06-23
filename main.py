@@ -43,8 +43,10 @@ def send_message_to_db(sender, message, time_str):
     }
     try:
         requests.post(url, headers=headers, json=data, timeout=5)
-    except Exception:
-        pass
+        if response.status_code != 201 and response.status_code !=200:
+            st.error(f"Database Error: {response.sttus_code} - {response.text}")
+    except Exception as e:
+        st.error(f"Connection Error: {e}")
 
 # Function to load Lottie animations safely
 def load_lottieurl(url: str):
