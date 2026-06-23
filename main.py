@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 from datetime import datetime
 import pandas as pd
+import time
 
 # Page configuration
 st.set_page_config(page_title="Happy Birthday Akkachi! ❤️", page_icon="🎂", layout="centered")
@@ -21,10 +22,11 @@ headers = {
     "Prefer": "return=representation"
 }
 
-# டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் ஃபங்க்ஷன் (Table Name Fixed)
+# டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் ஃபங்க்ஷன் (Cache மெமரி முற்றிலும் தவிர்க்கப்பட்டுள்ளது)
 def fetch_messages():
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    url = f"{SUPABASE_URL}/rest/v1/chat_table?select=sender,message,time&order=id.asc&t={timestamp}"
+    # பிரவுசர்/ஸ்ட்ரீம்லிட் பழைய தரவைக் காட்டாமல் இருக்க ஒவ்வொரு முறையும் ஒரு தனித்துவமான நேரக்குறியீடு (Timestamp) சேர்க்கப்படுகிறது
+    unique_time = str(time.time()).replace(".", "")
+    url = f"{SUPABASE_URL}/rest/v1/chat_table?select=sender,message,time&order=id.asc&nocache={unique_time}"
     try:
         response = requests.get(url, headers=headers, timeout=5)
         if response.status_code == 200:
@@ -33,7 +35,7 @@ def fetch_messages():
     except Exception:
         return []
 
-# டேட்டாவைச் சேர்க்கும் ஃபங்க்ஷன் (Syntax Error மற்றும் Table Name முற்றிலும் சரிசெய்யப்பட்டது)
+# டேட்டாவைச் சேர்க்கும் ஃபங்க்ஷன் 
 def send_message_to_db(sender, message, time_str):
     url = f"{SUPABASE_URL}/rest/v1/chat_table"
     data = {
@@ -91,7 +93,7 @@ if st.session_state['page'] == 'login':
             st.session_state['page'] = 'wish'
             st.rerun()
         else:
-            st.error("Thappான Password! சரியான பாஸ்வேர்டை உள்ளிடவும்.")
+            st.error("Thappuuuuuuuuuuuuuuuuu.")
 
 # --- IF AUTHENTICATED ---
 elif st.session_state['authenticated']:
@@ -128,7 +130,7 @@ elif st.session_state['authenticated']:
     # --- PAGE 3: QUIZ ---
     elif st.session_state['page'] == 'quiz':
         st.title("🧩 Akkachi's Birthday Quiz!")
-        ans1 = st.radio("Question 1: unnakku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
+        ans1 = st.radio("Question 1: Ammakku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
         if st.button("Submit Answers", type="primary"):
             if ans1 == "Me":
                 st.balloons()
@@ -136,19 +138,19 @@ elif st.session_state['authenticated']:
             else:
                 st.error("thappu thappu! 😜")
 
-    # --- PAGE 4: LIVE CHAT (Supabase Realtime Chat Method) ---
+    # --- PAGE 4: LIVE CHAT (Supabase Realtime Chat Method Fixed) ---
     elif st.session_state['page'] == 'live_chat':
         st.markdown("<h3 style='color: #4a90e2;'>💬 Live Chat Room</h3>", unsafe_allow_html=True)
         st.write("***Chat History:***")
         
-        # Supabase டேட்டாவை வாசித்தல்
+        # Supabase டேட்டாவை புதிய முறையில் வாசித்தல்
         db_messages = fetch_messages()
         
         chat_container = st.container(height=300)
         
         with chat_container:
             if not db_messages:
-                st.caption("Innum yaarum message seiyavillai. Neeye muthal msg podu! 👇")
+                st.caption("Innum yaarum message seiyala. Neeye muthal msg podu! 👇")
             else:
                 for msg in db_messages:
                     if msg.get('sender') == 'Akka':
@@ -158,23 +160,23 @@ elif st.session_state['authenticated']:
 
         sender_title = "Akka" if st.session_state['user_role'] == 'akka' else "Me (Developer)"
         
-        # Form வடிவமைப்பு மூலம் மெசேஜ் அனுப்புதல்
-        with st.form(key="chat_form", clear_on_submit=True):
-            user_msg = st.text_input(f"Send message as *{sender_title}*:", placeholder="Type a message...")
-            submit_button = st.form_submit_button(label="Send ✈️", type="primary")
-            
-            if submit_button:
-                if user_msg and user_msg.strip() != "":
-                    current_time = datetime.now().strftime("%H:%M")
-                    sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
-                    
-                    # Supabase `chat_table` டேபிளுக்குள் விழுவதை உறுதி செய்தல்
-                    send_message_to_db(sender_name, user_msg.strip(), current_time)
+        # Form வடிவமைப்பை நீக்கிவிட்டு, பட்டன் கிளிக்கில் உடனே அப்டேட்டாகும் நேரடி முறை
+        user_msg = st.text_input(f"Send message as *{sender_title}*:", key="msg_input_field", placeholder="Type a message...")
+        
+        if st.button("Send ✈️", type="primary"):
+            if user_msg and user_msg.strip() != "":
+                current_time = datetime.now().strftime("%H:%M")
+                sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
+                
+                # முதலாவதாக தரவை அனுப்புதல்
+                success = send_message_to_db(sender_name, user_msg.strip(), current_time)
+                if success:
+                    # மெசேஜ் விழுந்தவுடன் பக்கத்தை உடனடியாக முழுமையாக புதுப்பித்து புதிய தரவை வாசித்தல்
                     st.rerun()
 
     # --- PAGE 5: GIFT ---
     elif st.session_state['page'] == 'gift':
-        st.title("🎁 A Special Gift For You, Akkachi!")
+        st.title("🎁 A Special Gift For You, Akka!")
         try:
             st.image("gift_photo.jpg", caption="Happy Birthday Akkachi! 💖", use_container_width=True)
         except Exception:
