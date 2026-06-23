@@ -23,26 +23,45 @@ headers = {
 }
 
 # டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் ஃபங்க்ஷன் (Cache மெமரி முற்றிலும் தவிர்க்கப்பட்டுள்ளது)
-# டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் புதிய ஃபங்க்ஷன் (உடனடி அப்டேட் முறை)
-def fetch_messages():
-    import time
-    # பிரவுசர் அல்லது ஸ்ட்ரீம்லிட் பழைய தரவைக் காட்டாமல் இருக்க ஒவ்வொரு முறையும் ஒரு தனித்துவமான நேரக்குறியீடு (Timestamp) சேர்க்கப்படுகிறது
-    nocache_url_param = str(time.time()).replace(".", "")
-    url = f"{SUPABASE_URL}/rest/v1/chat_table?select=sender,message,time&order=id.asc&nocache={nocache_url_param}"
-    try:
-        # headers இல் Cache-Control ஐச் சேர்த்து பிரெஷ்ஷான டேட்டாவை வரவழைக்கிறோம்
-        live_headers = headers.copy()
-        live_headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        live_headers["Pragma"] = "no-cache"
-        live_headers["Expires"] = "0"
+# --- PAGE 4: LIVE CHAT (Supabase Realtime Chat Method - Sync Delay Fixed) ---
+    elif st.session_state['page'] == 'live_chat':
+        st.markdown("<h3 style='color: #4a90e2;'>💬 Live Chat Room</h3>", unsafe_allow_html=True)
+        st.write("***Chat History:***")
         
-        response = requests.get(url, headers=live_headers, timeout=5)
-        if response.status_code == 200:
-            return response.json()
-        return []
-    except Exception:
-        return []
+        # Supabase டேட்டாவை வாசித்தல்
+        db_messages = fetch_messages()
         
+        chat_container = st.container(height=300)
+        
+        with chat_container:
+            if not db_messages:
+                st.caption("Innum yaarum message seiyavillai. Neeye muthal msg podu! 👇")
+            else:
+                for msg in db_messages:
+                    if msg.get('sender') == 'Akka':
+                        st.markdown(f"**👩‍🦰 Akka [{msg.get('time', '')}]:** {msg.get('message', '')}")
+                    else:
+                        st.markdown(f"**👨‍💻 Me [{msg.get('time', '')}]:** {msg.get('message', '')}")
+
+        sender_title = "Akka" if st.session_state['user_role'] == 'akka' else "Me (Developer)"
+        
+        # Form வடிவமைப்பு மூலம் மெசேஜ் அனுப்புதல்
+        with st.form(key="chat_form_final_sync", clear_on_submit=True):
+            user_msg = st.text_input(f"Send message as *{sender_title}*:", placeholder="Type a message...")
+            submit_button = st.form_submit_button(label="Send ✈️", type="primary")
+            
+            if submit_button:
+                if user_msg and user_msg.strip() != "":
+                    current_time = datetime.now().strftime("%H:%M")
+                    sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
+                    
+                    # Supabase டேட்டாபேஸிற்குள் மெசேஜை அனுப்புதல்
+                    success = send_message_to_db(sender_name, user_msg.strip(), current_time)
+                    if success:
+                        # --- FIX: Supabase-இல் டேட்டா விழ 1 செகண்ட் டைம் கொடுத்துவிட்டு பக்கத்தை ரீபிரெஷ் செய்தல் ---
+                        import time
+                        time.sleep(1)
+                        st.rerun()        
 # டேட்டாவைச் சேர்க்கும் ஃபங்க்ஷன் 
 def send_message_to_db(sender, message, time_str):
     url = f"{SUPABASE_URL}/rest/v1/chat_table"
