@@ -2,14 +2,49 @@ import streamlit as st
 import requests
 from datetime import datetime
 import pandas as pd
-import json
 
 # Page configuration
 st.set_page_config(page_title="Happy Birthday Akkachi! ❤️", page_icon="🎂", layout="centered")
 
-# Initialize Session State for Chat History
-if 'chat_messages' not in st.session_state:
-    st.session_state['chat_messages'] = []
+# --- SUPABASE REST API CONFIGURATION ---
+# Secrets இல் இருந்து விபரங்களைப் பாதுகாப்பாக எடுத்தல்
+try:
+    SUPABASE_URL = st.secrets["SUPABASE_URL"]
+    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+except Exception:
+    st.error("Streamlit Secrets இல் SUPABASE_URL மற்றும் SUPABASE_KEY ஐ இன்னும் சேர்க்கவில்லை!")
+    st.stop()
+
+headers = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": f"Bearer {SUPABASE_KEY}",
+    "Content-Type": "application/json",
+    "Prefer": "return=representation"
+}
+
+# டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் ஃபங்க்ஷன் (No Error Method)
+def fetch_messages():
+    url = f"{SUPABASE_URL}/rest/v1/chats?select=sender,message,time&order=id.asc"
+    try:
+        response = requests.get(url, headers=headers, timeout=5)
+        if response.status_code == 200:
+            return response.json()
+        return []
+    except Exception:
+        return []
+
+# டேட்டாபேஸிற்குள் புதிய மெசேஜை அனுப்பும் ஃபங்க்ஷன்
+def send_message_to_db(sender, message, time_str):
+    url = f"{SUPABASE_URL}/rest/v1/chats"
+    data = {
+        "sender": sender,
+        "message": message,
+        "time": time_str
+    }
+    try:
+        requests.post(url, headers=headers, json=data, timeout=5)
+    except Exception:
+        pass
 
 # Function to load Lottie animations safely
 def load_lottieurl(url: str):
@@ -50,7 +85,7 @@ if st.session_state['page'] == 'login':
             st.session_state['page'] = 'wish'
             st.rerun()
         else:
-            st.error("Thappuuuuuuu.")
+            st.error("Thappuuuuuuuuuuuuuuuuuu.")
 
 # --- IF AUTHENTICATED ---
 elif st.session_state['authenticated']:
@@ -87,49 +122,29 @@ elif st.session_state['authenticated']:
     # --- PAGE 3: QUIZ ---
     elif st.session_state['page'] == 'quiz':
         st.title("🧩 Akkachi's Birthday Quiz!")
-        ans1 = st.radio("Question 1: unnakku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
+        ans1 = st.radio("Question 1: Ammakku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
         if st.button("Submit Answers", type="primary"):
             if ans1 == "Me":
                 st.balloons()
-                st.success("good girl! ❤️✨")
+                st.success("Amazing! All answers are absolutely correct! ❤️✨")
             else:
                 st.error("thappu thappu! 😜")
 
-    # --- PAGE 4: LIVE CHAT (100% Safe Local Storage Method) ---
+    # --- PAGE 4: LIVE CHAT (Supabase Realtime Chat Method) ---
     elif st.session_state['page'] == 'live_chat':
         st.markdown("<h3 style='color: #4a90e2;'>💬 Live Chat Room</h3>", unsafe_allow_html=True)
         st.write("***Chat History:***")
         
-        # ஜாவாஸ்கிரிப்ட் மூலம் பிரவுசர் மெமரியில் இருந்து பழைய மெசேஜ்களைப் படிக்கும் பகுதி
-        # இது பக்கத்தை ரீஃப்ரெஷ் செய்தாலும் மெசேஜ் அழியாமல் பாதுகாக்கும்
-        js_get_code = """
-        <script>
-            const chats = localStorage.getItem('birthday_chat_history') || '[]';
-            if (window.parent && window.parent.postMessage) {
-                window.parent.postMessage({
-                    type: 'streamlit:setComponentValue',
-                    value: chats
-                }, '*');
-            }
-        </script>
-        """
-        # பிரவுசரில் இருந்து பெறப்படும் தரவை வாங்குதல்
-        raw_chats = st.components.v1.html(js_get_code, height=0)
+        # Supabase டேட்டாபேஸில் இருந்து லைவ்வாக மெசேஜ்களைப் படித்தல்
+        db_messages = fetch_messages()
         
-        # ஒருவேளை லோக்கல் மெமரியில் டேட்டா இருந்தால் அதை சாட் லிஸ்டில் இணைப்போம்
-        if raw_chats and isinstance(raw_chats, str) and raw_chats != '[]':
-            try:
-                st.session_state['chat_messages'] = json.loads(raw_chats)
-            except Exception:
-                pass
-
         chat_container = st.container(height=300)
         
         with chat_container:
-            if not st.session_state['chat_messages']:
+            if not db_messages:
                 st.caption("Innum yaarum message seiyavillai. Neeye muthal msg podu! 👇")
             else:
-                for msg in st.session_state['chat_messages']:
+                for msg in db_messages:
                     if msg['sender'] == 'Akka':
                         st.markdown(f"**👩‍🦰 Akka [{msg['time']}]:** {msg['message']}")
                     else:
@@ -143,21 +158,8 @@ elif st.session_state['authenticated']:
                 current_time = datetime.now().strftime("%H:%M")
                 sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
                 
-                # புதிய மெசேஜை செஷனில் சேர்த்தல்
-                st.session_state['chat_messages'].append({
-                    "sender": sender_name,
-                    "message": user_msg,
-                    "time": current_time
-                })
-                
-                # பிரவுசரின் சொந்த Local Storage மெமரியில் மெசேஜ்களைப் பத்திரமாகச் சேமிக்கும் பகுதி
-                clean_json = json.dumps(st.session_state['chat_messages']).replace("'", "\\'")
-                js_save = f"""
-                <script>
-                    localStorage.setItem('birthday_chat_history', '{clean_json}');
-                </script>
-                """
-                st.components.v1.html(js_save, height=0)
+                # புதிய மெசேஜை Supabase ஆன்லைன் டேட்டாபேஸிற்குள் பத்திரமாகச் சேமித்தல்
+                send_message_to_db(sender_name, user_msg, current_time)
                 st.rerun()
 
     # --- PAGE 5: GIFT ---
