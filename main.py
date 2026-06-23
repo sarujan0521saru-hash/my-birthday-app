@@ -23,11 +23,11 @@ headers = {
 }
 
 # டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் ஃபங்க்ஷன் (No Error Method)
-# டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் ஃபங்க்ஷன் (Cached / Fixed URL)
+# டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் ஃபங்க்ஷன் (Table Name Fixed)
 def fetch_messages():
-    # Cache மெமரியைத் தவிர்க்க ஒரு தந்திரம் (datetime.now() பயன்படுத்தி URL ஐ மாற்றுவது)
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    url = f"{SUPABASE_URL}/rest/v1/chats?select=sender,message,time&order=id.asc&t={timestamp}"
+    # இங்கிருந்த chats என்பதை chat_table என்று மாற்றியுள்ளோம்
+    url = f"{SUPABASE_URL}/rest/v1/chat_table?select=sender,message,time&order=id.asc&t={timestamp}"
     try:
         response = requests.get(url, headers=headers, timeout=5)
         if response.status_code == 200:
@@ -36,9 +36,10 @@ def fetch_messages():
     except Exception:
         return []
 
-# டேட்டாவைச் சேர்த்ததும் அது விழுந்ததா என்று சரிபார்க்கும் புதிய ஃபங்க்ஷன்
+# டேட்டாவைச் சேர்க்கும் ஃபங்க்ஷன் (Table Name Fixed)
 def send_message_to_db(sender, message, time_str):
-    url = f"{SUPABASE_URL}/rest/v1/chats"
+    # இங்கிருந்த chats என்பதை chat_table என்று மாற்றியுள்ளோம்
+    url = f"{SUPABASE_URL}/rest/v1/chat_table"
     data = {
         "sender": sender,
         "message": message,
@@ -46,14 +47,14 @@ def send_message_to_db(sender, message, time_str):
     }
     try:
         response = requests.post(url, headers=headers, json=data, timeout=5)
-        # மெசேஜ் விழுந்ததும் பக்கத்தை உடனே அப்டேட் செய்ய அனுமதிக்கும்
         if response.status_code in [200, 201]:
             return True
         else:
-            # எரர் இருந்தால் திரையில் காட்டும் (உங்களுக்குப் புரியும் வகையில்)
             st.error(f"Database Reject பண்ணுகிறது: {response.text}")
             return False
     except Exception as e:
+        st.error(f"Network Error: {e}")
+        return False    except Exception as e:
         st.error(f"Network Error: {e}")
         return False
 # Function to load Lottie animations safely
