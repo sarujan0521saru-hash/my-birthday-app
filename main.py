@@ -62,25 +62,25 @@ if st.session_state['page'] == 'login':
     password = st.text_input("Enter Password:", type="password")
     
     if st.button("Login 🚀", type="primary"):
-        if password == "akka123":
+        if password == "0625":
             st.session_state['authenticated'] = True
             st.session_state['user_role'] = 'akka'
             st.session_state['page'] = 'wish'
             st.rerun()
-        elif password == "dev123":
+        elif password == "0421":
             st.session_state['authenticated'] = True
             st.session_state['user_role'] = 'developer'
             st.session_state['page'] = 'wish'
             st.rerun()
         else:
-            st.error("Thappான Password! சரியான பாஸ்வேர்டை உள்ளிடவும்.")
+            st.error("thappuuuuuuuuu")
 
 # --- IF AUTHENTICATED ---
 elif st.session_state['authenticated']:
     
     # Sidebar Navigation
     st.sidebar.title("Navigation")
-    if st.sidebar.button("🎉 Birthday Wish", use_container_width=True):
+    if st.sidebar.button("🎉 for my akkachiiii", use_container_width=True):
         st.session_state['page'] = 'wish'
         st.rerun()
     if st.sidebar.button("🧩 Quiz Game", use_container_width=True):
@@ -103,7 +103,7 @@ elif st.session_state['authenticated']:
     # --- PAGE 2: WISH ---
     if st.session_state['page'] == 'wish':
         st.title("🎉 Happy Birthday Akkachi! 🎂")
-        st.write("உங்களுக்கு என்னுடைய இனிய பிறந்தநாள் நல்வாழ்த்துகள் அக்கா! 💖")
+        st.write("first happy birthday akka nee life full ah happy ah irukkanum enaku rompa pidicha nan romba nampura person nee akka nan ena alampinaalum keaddu kondu enakku sappadu theethi viddu nan kavalaila iruntha athukkum aaruthal solli enakku kuuda pirantha akka maari ena pathu kidda ovve you sooo much akka and happiest birthday for you! 💖")
         if lottie_cake:
             st.components.v1.html(f'<iframe src="https://lottie.host/embed/8ba478b0-b530-4e50-bf6c-67c13cb28188/ecvY38A24J.json" style="border:none; width:100%; height:400px;"></iframe>', height=400)
 
@@ -114,7 +114,7 @@ elif st.session_state['authenticated']:
         if st.button("Submit Answers", type="primary"):
             if ans1 == "Me":
                 st.balloons()
-                st.success("Amazing! All answers are absolutely correct! ❤️✨")
+                st.success("good girl ❤️✨")
             else:
                 st.error("thappu thappu! 😜")
 
