@@ -139,7 +139,7 @@ elif st.session_state['authenticated']:
                 st.error("thappu thappu! 😜")
 
     # --- PAGE 4: LIVE CHAT (Supabase Realtime Chat Method Fixed) ---
-# --- PAGE 4: LIVE CHAT (Supabase Realtime Chat Method - Safe State Fixed) ---
+# --- PAGE 4: LIVE CHAT (Supabase Realtime Chat Method - Final Fixed Form) ---
     elif st.session_state['page'] == 'live_chat':
         st.markdown("<h3 style='color: #4a90e2;'>💬 Live Chat Room</h3>", unsafe_allow_html=True)
         st.write("***Chat History:***")
@@ -161,25 +161,22 @@ elif st.session_state['authenticated']:
 
         sender_title = "Akka" if st.session_state['user_role'] == 'akka' else "Me (Developer)"
         
-        # --- FIX: Form இல்லாமல் மெசேஜ் பாக்ஸை காலி செய்ய உதவும் ஃபங்க்ஷன் ---
-        if 'input_msg_text' not in st.session_state:
-            st.session_state['input_msg_text'] = ""
-
-        # மெசேஜ் அனுப்பும் முக்கிய பகுதி
-        user_msg = st.text_input(f"Send message as *{sender_title}*:", key="msg_input_field", placeholder="Type a message...")
-        
-        if st.button("Send ✈️", type="primary"):
-            if user_msg and user_msg.strip() != "":
-                current_time = datetime.now().strftime("%H:%M")
-                sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
-                
-                # டேட்டாபேஸிற்குள் மெசேஜை அனுப்புதல்
-                success = send_message_to_db(sender_name, user_msg.strip(), current_time)
-                if success:
-                    # மெசேஜ் பாக்ஸை காலி செய்ய அதன் key மதிப்பை மாற்றுதல்
-                    st.session_state['msg_input_field'] = ""
-                    # பக்கத்தை உடனடியாகப் புதுப்பித்தல்
-                    st.rerun()    # --- PAGE 5: GIFT ---
+        # --- 100% எரர் இல்லாத Form முறை (clear_on_submit பாக்ஸை காலி செய்யும்) ---
+        with st.form(key="chat_form_fixed", clear_on_submit=True):
+            user_msg = st.text_input(f"Send message as *{sender_title}*:", placeholder="Type a message...")
+            submit_button = st.form_submit_button(label="Send ✈️", type="primary")
+            
+            if submit_button:
+                if user_msg and user_msg.strip() != "":
+                    current_time = datetime.now().strftime("%H:%M")
+                    sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
+                    
+                    # டேட்டாபேஸிற்குள் மெசேஜை அனுப்புதல்
+                    success = send_message_to_db(sender_name, user_msg.strip(), current_time)
+                    if success:
+                        # பக்கத்தை உடனடியாகப் புதுப்பித்தல் (உடனே மேலே மெசேஜ் காட்டும்)
+                        st.rerun()
+        # --- PAGE 5: GIFT ---
     elif st.session_state['page'] == 'gift':
         st.title("🎁 A Special Gift For You, Akka!")
         try:
