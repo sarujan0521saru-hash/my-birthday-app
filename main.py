@@ -3,23 +3,36 @@ import requests
 from datetime import datetime
 import pandas as pd
 import json
-from streamlit_local_storage import StLocalStorage
 
 # Page configuration
 st.set_page_config(page_title="Happy Birthday Akkachi! ❤️", page_icon="🎂", layout="centered")
 
-# Initialize Session State for Chat History if it doesn't exist
-local_storage = StLocalStorage()
+# --- JAVASCRIPT LOCAL STORAGE MANAGEMENT ---
+# பிரவுசர் மெமரியில் இருந்து சாட்டைப் படிக்கவும் எழுதவும் உதவும் எளிய JS கம்போனென்ட்
+js_code = """
+<script>
+    // Streamlit உடன் பேசும் தந்திரம்
+    function sendToStreamlit(data) {
+        window.parent.postMessage({type: 'streamlit:setComponentValue', value: data}, '*');
+    }
+    
+    // லோக்கல் ஸ்டோரேஜில் இருந்து சாட்டை எடுத்தல்
+    window.addEventListener('message', function(event) {
+        if (event.data.type === 'get_chat') {
+            const chats = localStorage.getItem('birthday_chat_history') || '[]';
+            sendToStreamlit(chats);
+        }
+        if (event.data.type === 'save_chat') {
+            localStorage.setItem('birthday_chat_history', event.data.chats);
+        }
+    });
+</script>
+"""
+st.components.v1.html(js_code, height=0)
 
-stored_chats = local_storage.get_item("chat_history")
-if stored_chat is not None and stored_chat != "":
-    try:
-        st.session_state['chat_messages'] = json.loads(stored_chats)
-    except Exception:
-        st.session_state['chat_messages'] = []
-else:
-    if 'chat_messages' not in st.session_state:
-        st.session_state['chat_messages'] = []
+# Initialize Session State for Chat History
+if 'chat_messages' not in st.session_state:
+    st.session_state['chat_messages'] = []
 
 # Function to load Lottie animations safely
 def load_lottieurl(url: str):
@@ -49,25 +62,25 @@ if st.session_state['page'] == 'login':
     password = st.text_input("Enter Password:", type="password")
     
     if st.button("Login 🚀", type="primary"):
-        if password == "0625":  # உங்கள் अकाவின் பாஸ்வேர்ட்
+        if password == "akka123":
             st.session_state['authenticated'] = True
             st.session_state['user_role'] = 'akka'
             st.session_state['page'] = 'wish'
             st.rerun()
-        elif password == "0421":  # உங்களுடைய பாஸ்வேர்ட்
+        elif password == "dev123":
             st.session_state['authenticated'] = True
             st.session_state['user_role'] = 'developer'
             st.session_state['page'] = 'wish'
             st.rerun()
         else:
-            st.error("thappuuuuuuuuuu")
+            st.error("Thappான Password! சரியான பாஸ்வேர்டை உள்ளிடவும்.")
 
 # --- IF AUTHENTICATED ---
 elif st.session_state['authenticated']:
     
-    # Sidebar Navigation (இடது பக்க மெனு)
+    # Sidebar Navigation
     st.sidebar.title("Navigation")
-    if st.sidebar.button("🎉 for you Akka", use_container_width=True):
+    if st.sidebar.button("🎉 Birthday Wish", use_container_width=True):
         st.session_state['page'] = 'wish'
         st.rerun()
     if st.sidebar.button("🧩 Quiz Game", use_container_width=True):
@@ -76,7 +89,7 @@ elif st.session_state['authenticated']:
     if st.sidebar.button("💬 Live Chat Room", use_container_width=True):
         st.session_state['page'] = 'live_chat'
         st.rerun()
-    if st.sidebar.button("🎁 gift", use_container_width=True):  # புதிய Gift பட்டன்
+    if st.sidebar.button("🎁 Gift", use_container_width=True):
         st.session_state['page'] = 'gift'
         st.rerun()
         
@@ -90,26 +103,32 @@ elif st.session_state['authenticated']:
     # --- PAGE 2: WISH ---
     if st.session_state['page'] == 'wish':
         st.title("🎉 Happy Birthday Akkachi! 🎂")
-        st.write("first happy birthday akka enakku romba pidicha and nan romba nampura person nee ena eapavum happy ahh vachu irunthu irukaa enakku oru kuuda pirantha akka maari ena paathukidda enakku oru pirachanandaa athukku aaruthal thaarathum nee than ena comfert panrathum nee than enda cella akkakku happiest birthday wish 💖")
+        st.write("உங்களுக்கு என்னுடைய இனிய பிறந்தநாள் நல்வாழ்த்துகள் அக்கா! 💖")
         if lottie_cake:
             st.components.v1.html(f'<iframe src="https://lottie.host/embed/8ba478b0-b530-4e50-bf6c-67c13cb28188/ecvY38A24J.json" style="border:none; width:100%; height:400px;"></iframe>', height=400)
 
     # --- PAGE 3: QUIZ ---
     elif st.session_state['page'] == 'quiz':
         st.title("🧩 Akkachi's Birthday Quiz!")
-        
-        ans1 = st.radio("Question 1: unnakku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
+        ans1 = st.radio("Question 1: Ammakku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
         if st.button("Submit Answers", type="primary"):
             if ans1 == "Me":
                 st.balloons()
-                st.success("sariyaana pathil ! ❤️✨")
+                st.success("Amazing! All answers are absolutely correct! ❤️✨")
             else:
                 st.error("thappu thappu! 😜")
 
-    # --- PAGE 4: LIVE CHAT ---
+    # --- PAGE 4: LIVE CHAT (Safe Local Storage Method) ---
     elif st.session_state['page'] == 'live_chat':
         st.markdown("<h3 style='color: #4a90e2;'>💬 Live Chat Room</h3>", unsafe_allow_html=True)
         st.write("***Chat History:***")
+        
+        # பிரவுசரின் மெமரியில் சாட் ஹிஸ்டரி ஏற்கனவே சேமிக்கப்பட்டிருந்தால் அதை லோட் செய்ய எளிய கம்போனென்ட்
+        ctx = st.components.v1.declare_component("local_storage_ctx", html="<script></script>")
+        js_get = "const chats = localStorage.getItem('birthday_chat_history') || '[]'; window.parent.postMessage({type: 'streamlit:setComponentValue', value: chats}, '*');"
+        
+        # மெசேஜ்களை லோக்கலாக அப்டேட் செய்தல்
+        stored_raw = st.components.v1.html(f"<script>{js_get}</script>", height=0)
         
         chat_container = st.container(height=300)
         
@@ -131,24 +150,25 @@ elif st.session_state['authenticated']:
                 current_time = datetime.now().strftime("%H:%M")
                 sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
                 
+                # புதிய மெசேஜை லிஸ்டில் சேர்க்கிறோம்
                 st.session_state['chat_messages'].append({
                     "sender": sender_name,
                     "message": user_msg,
                     "time": current_time
                 })
-                local_storage.set_item("chat_history", json.dumps(st.session_state['chat_messages']))
+                
+                # பிரவுசரின் சொந்த Local Storage-இல் ஜாவாஸ்கிரிப்ட் மூலம் நிரந்தரமாகச் சேமிக்கிறோம்
+                js_save = f"localStorage.setItem('birthday_chat_history', '{json.dumps(st.session_state['chat_messages'])}');"
+                st.components.v1.html(f"<script>{js_save}</script>", height=0)
                 st.rerun()
 
-    # --- PAGE 5: GIFT (புதிய பக்கம்) ---
+    # --- PAGE 5: GIFT ---
     elif st.session_state['page'] == 'gift':
         st.title("🎁 A Special Gift For You, Akkachi!")
-        st.write("it's my small gift for my best person! ✨")
-        
-        # உங்கள் புகைப்படத்தை அப்லோடு செய்ய வேண்டிய பகுதி
-        # "gift_photo.jpg" என்ற பெயரில் உங்கள் போட்டோவை GitHub-இல் அப்லோடு செய்துவிட்டால் அது இங்கே காட்டும்.
         try:
-            st.image("gift_photo.jpeg", caption="Happy Birthday Akkachi! 💖", use_container_width=True)
+            st.image("gift_photo.jpg", caption="Happy Birthday Akkachi! 💖", use_container_width=True)
         except Exception:
-            # ஒருவேளை போட்டோ இன்னும் அப்லோடு செய்யப்படவில்லை என்றால் தற்காலிகமாக இந்த ஆன்லைன் போட்டோ காட்டும்.
-            st.image("https://images.unsplash.com/photo-1513201099705-a9746e1e201f", caption="Gift Box 🎁", use_container_width=True)
-            st.info("குறிப்பு: உங்கள் சொந்த புகைப்படத்தைக் காட்ட, GitHub-இல் 'gift_photo.jpg' என்ற பெயரில் ஒரு போட்டோவை அப்லோடு செய்யவும்.")
+            try:
+                st.image("gift_photo.jpeg", caption="Happy Birthday Akkachi! 💖", use_container_width=True)
+            except Exception:
+                st.image("https://images.unsplash.com/photo-1513201099705-a9746e1e201f", caption="Gift Box 🎁", use_container_width=True)
