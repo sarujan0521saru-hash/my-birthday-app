@@ -9,25 +9,8 @@ st.set_page_config(page_title="Happy Birthday Akkachi! ❤️", page_icon="🎂"
 
 # --- JAVASCRIPT LOCAL STORAGE MANAGEMENT ---
 # பிரவுசர் மெமரியில் இருந்து சாட்டைப் படிக்கவும் எழுதவும் உதவும் எளிய JS கம்போனென்ட்
-js_code = """
-<script>
-    // Streamlit உடன் பேசும் தந்திரம்
-    function sendToStreamlit(data) {
-        window.parent.postMessage({type: 'streamlit:setComponentValue', value: data}, '*');
-    }
-    
-    // லோக்கல் ஸ்டோரேஜில் இருந்து சாட்டை எடுத்தல்
-    window.addEventListener('message', function(event) {
-        if (event.data.type === 'get_chat') {
-            const chats = localStorage.getItem('birthday_chat_history') || '[]';
-            sendToStreamlit(chats);
-        }
-        if (event.data.type === 'save_chat') {
-            localStorage.setItem('birthday_chat_history', event.data.chats);
-        }
-    });
-</script>
-"""
+
+
 st.components.v1.html(js_code, height=0)
 
 # Initialize Session State for Chat History
@@ -119,17 +102,28 @@ elif st.session_state['authenticated']:
                 st.error("thappu thappu! 😜")
 
     # --- PAGE 4: LIVE CHAT (Safe Local Storage Method) ---
+# --- PAGE 4: LIVE CHAT (Simple Safe JavaScript Storage) ---
     elif st.session_state['page'] == 'live_chat':
         st.markdown("<h3 style='color: #4a90e2;'>💬 Live Chat Room</h3>", unsafe_allow_html=True)
         st.write("***Chat History:***")
         
-        # பிரவுசரின் மெமரியில் சாட் ஹிஸ்டரி ஏற்கனவே சேமிக்கப்பட்டிருந்தால் அதை லோட் செய்ய எளிய கம்போனென்ட்
-        ctx = st.components.v1.declare_component("local_storage_ctx", html="<script></script>")
-        js_get = "const chats = localStorage.getItem('birthday_chat_history') || '[]'; window.parent.postMessage({type: 'streamlit:setComponentValue', value: chats}, '*');"
+        # ஜாவாஸ்கிரிப்ட் மூலம் பிரவுசர் மெமரியில் இருந்து மெசேஜ்களை செஷன் ஸ்டேட்டிற்குள் கொண்டு வரும் எளிய தந்திரம்
+        import streamlit.components.v1 as components
         
-        # மெசேஜ்களை லோக்கலாக அப்டேட் செய்தல்
-        stored_raw = st.components.v1.html(f"<script>{js_get}</script>", height=0)
-        
+        # 1. பிரவுசரில் மெசேஜ் இருந்தால் அதை எடுக்க ஒரு மறைமுக பட்டன்
+        if 'js_loaded' not in st.session_state:
+            js_script = """
+            <script>
+                const data = localStorage.getItem('birthday_chat_history') || '[]';
+                window.parent.postMessage({
+                    type: 'streamlit:setComponentValue',
+                    value: data
+                }, '*');
+            </script>
+            """
+            components.html(js_script, height=0)
+            st.session_state['js_loaded'] = True
+            
         chat_container = st.container(height=300)
         
         with chat_container:
@@ -150,16 +144,17 @@ elif st.session_state['authenticated']:
                 current_time = datetime.now().strftime("%H:%M")
                 sender_name = "Akka" if st.session_state['user_role'] == 'akka' else "Me"
                 
-                # புதிய மெசேஜை லிஸ்டில் சேர்க்கிறோம்
+                # புதிய மெசேஜை லிஸ்டில் சேர்த்தல்
                 st.session_state['chat_messages'].append({
                     "sender": sender_name,
                     "message": user_msg,
                     "time": current_time
                 })
                 
-                # பிரவுசரின் சொந்த Local Storage-இல் ஜாவாஸ்கிரிப்ட் மூலம் நிரந்தரமாகச் சேமிக்கிறோம்
-                js_save = f"localStorage.setItem('birthday_chat_history', '{json.dumps(st.session_state['chat_messages'])}');"
-                st.components.v1.html(f"<script>{js_save}</script>", height=0)
+                # பிரவுசரின் சொந்த Local Storage-இல் ஜாவாஸ்கிரிப்ட் மூலம் நேரடியாக சேமித்தல்
+                clean_json = json.dumps(st.session_state['chat_messages']).replace("'", "\\'")
+                js_save = f"<script>localStorage.setItem('birthday_chat_history', '{clean_json}');</script>"
+                components.html(js_save, height=0)
                 st.rerun()
 
     # --- PAGE 5: GIFT ---
