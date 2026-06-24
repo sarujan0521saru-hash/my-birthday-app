@@ -91,7 +91,7 @@ if 'page' not in st.session_state:
 
 # --- PAGE 1: LOGIN ---
 if st.session_state['page'] == 'login':
-    st.title("🎂 Welcome to Akkachi's Birthday App! 🎈")
+    st.title("🎂 Welcome to Akkachi Birthday App! 🎈")
     st.subheader("Please Login")
     
     password = st.text_input("Enter Password:", type="password")
@@ -145,7 +145,7 @@ elif st.session_state['authenticated']:
     # --- PAGE 3: QUIZ ---
     elif st.session_state['page'] == 'quiz':
         st.title("🧩 Akkachi's Birthday Quiz!")
-        ans1 = st.radio("Question 1: Ammakku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
+        ans1 = st.radio("Question 1: unnakku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
         if st.button("Submit Answers", type="primary"):
             if ans1 == "Me":
                 st.balloons()
