@@ -3,6 +3,8 @@ import requests
 from datetime import datetime
 import pandas as pd
 import time
+# ஆட்டோ-ரிஃப்ரெஷ் செய்ய புதிய லைப்ரரி இறக்குமதி செய்யப்பட்டுள்ளது
+from streamlit_autorefresh import st_autorefresh
 
 # Page configuration
 st.set_page_config(page_title="Happy Birthday Akkachi! ❤️", page_icon="🎂", layout="centered")
@@ -58,7 +60,6 @@ def send_message_to_db(sender, message, time_str):
 
 # சாட் ஹிஸ்டரியை முழுமையாக அழிக்கும் ஃபங்க்ஷன் 
 def clear_all_messages_from_db():
-    # id இல் 0 ஐ விட பெரியதாக உள்ள அனைத்தையும் நீக்கு (அனைத்து மெசேஜ்களும் அழியும்)
     url = f"{SUPABASE_URL}/rest/v1/chat_table?id=gt.0"
     try:
         response = requests.delete(url, headers=headers, timeout=5)
@@ -90,7 +91,7 @@ if 'page' not in st.session_state:
 
 # --- PAGE 1: LOGIN ---
 if st.session_state['page'] == 'login':
-    st.title("🎂 Welcome to Akkachi Birthday App! 🎈")
+    st.title("🎂 Welcome to Akkachi's Birthday App! 🎈")
     st.subheader("Please Login")
     
     password = st.text_input("Enter Password:", type="password")
@@ -117,7 +118,7 @@ elif st.session_state['authenticated']:
     if st.sidebar.button("🎉 for my sister", use_container_width=True):
         st.session_state['page'] = 'wish'
         st.rerun()
-    if st.sidebar.button("🧩 ore oru kealvi", use_container_width=True):
+    if st.sidebar.button("🧩 Quiz Game", use_container_width=True):
         st.session_state['page'] = 'quiz'
         st.rerun()
     if st.sidebar.button("💬 Live Chat Room", use_container_width=True):
@@ -144,7 +145,7 @@ elif st.session_state['authenticated']:
     # --- PAGE 3: QUIZ ---
     elif st.session_state['page'] == 'quiz':
         st.title("🧩 Akkachi's Birthday Quiz!")
-        ans1 = st.radio("Question 1: unnaku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
+        ans1 = st.radio("Question 1: Ammakku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
         if st.button("Submit Answers", type="primary"):
             if ans1 == "Me":
                 st.balloons()
@@ -154,6 +155,9 @@ elif st.session_state['authenticated']:
 
     # --- PAGE 4: LIVE CHAT ---
     elif st.session_state['page'] == 'live_chat':
+        # --- FIX: ஒவ்வொரு 3 செகண்டிற்கு ஒருமுறை பின்புலத்தில் பக்கத்தை ஆட்டோ-ரிஃப்ரெஷ் செய்யும் அமைப்பு ---
+        st_autorefresh(interval=3000, key="chat_refresh_loop")
+
         st.markdown("<h3 style='color: #4a90e2;'>💬 Live Chat Room</h3>", unsafe_allow_html=True)
         st.write("***Chat History:***")
         
@@ -164,7 +168,7 @@ elif st.session_state['authenticated']:
         
         with chat_container:
             if not db_messages:
-                st.caption("Innum yaarum message seiyala. Neeye muthal msg podu! 👇")
+                st.caption("Innum yaarum message seiyavillai. Neeye muthal msg podu! 👇")
             else:
                 for msg in db_messages:
                     if msg.get('sender') == 'Akka':
@@ -189,7 +193,6 @@ elif st.session_state['authenticated']:
                         st.rerun()
 
         # --- CLEAR CHAT BUTTON FOR EVERYONE ---
-        # இந்த பட்டன் இருவருக்குமே (Akka மற்றும் Me) பொதுவானதாக கீழே காட்டும்.
         st.markdown("---")
         if st.button("🗑️ Clear Entire Chat History", type="secondary", use_container_width=True):
             if clear_all_messages_from_db():
