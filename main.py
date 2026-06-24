@@ -24,9 +24,8 @@ headers = {
 
 # --- DATABASE FUNCTIONS ---
 
-
+# டேட்டாபேஸில் இருந்து மெசேஜ்களைப் படிக்கும் ஃபங்க்ஷன்
 def fetch_messages():
-
     url = f"{SUPABASE_URL}/rest/v1/chat_table?select=sender,message,time&order=id.asc"
     try:
         live_headers = headers.copy()
@@ -41,6 +40,7 @@ def fetch_messages():
     except Exception:
         return []
 
+# டேட்டாவைச் சேர்க்கும் ஃபங்க்ஷன் 
 def send_message_to_db(sender, message, time_str):
     url = f"{SUPABASE_URL}/rest/v1/chat_table"
     data = {
@@ -51,6 +51,18 @@ def send_message_to_db(sender, message, time_str):
     try:
         response = requests.post(url, headers=headers, json=data, timeout=5)
         if response.status_code in [200, 201]:
+            return True
+        return False
+    except Exception:
+        return False
+
+# சாட் ஹிஸ்டரியை முழுமையாக அழிக்கும் ஃபங்க்ஷன் 
+def clear_all_messages_from_db():
+    # id இல் 0 ஐ விட பெரியதாக உள்ள அனைத்தையும் நீக்கு (அனைத்து மெசேஜ்களும் அழியும்)
+    url = f"{SUPABASE_URL}/rest/v1/chat_table?id=gt.0"
+    try:
+        response = requests.delete(url, headers=headers, timeout=5)
+        if response.status_code in [200, 204]:
             return True
         return False
     except Exception:
@@ -132,7 +144,7 @@ elif st.session_state['authenticated']:
     # --- PAGE 3: QUIZ ---
     elif st.session_state['page'] == 'quiz':
         st.title("🧩 Akkachi's Birthday Quiz!")
-        ans1 = st.radio("Question 1: unnakku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
+        ans1 = st.radio("Question 1: Ammakku romba pidicha person yaru? 🤷", ["Friends", "Me", "No one"], key="q1")
         if st.button("Submit Answers", type="primary"):
             if ans1 == "Me":
                 st.balloons()
@@ -145,7 +157,7 @@ elif st.session_state['authenticated']:
         st.markdown("<h3 style='color: #4a90e2;'>💬 Live Chat Room</h3>", unsafe_allow_html=True)
         st.write("***Chat History:***")
         
-        
+        # Supabase டேட்டாவை வாசித்தல்
         db_messages = fetch_messages()
         
         chat_container = st.container(height=300)
@@ -161,8 +173,8 @@ elif st.session_state['authenticated']:
                         st.markdown(f"**👨‍💻 Me [{msg.get('time', '')}]:** {msg.get('message', '')}")
 
         sender_title = "Akka" if st.session_state['user_role'] == 'akka' else "Me (Developer)"
-
         
+        # மெசேஜ் அனுப்பும் படிவம்
         with st.form(key="chat_form_clean", clear_on_submit=True):
             user_msg = st.text_input(f"Send message as *{sender_title}*:", placeholder="Type a message...")
             submit_button = st.form_submit_button(label="Send ✈️", type="primary")
@@ -174,8 +186,18 @@ elif st.session_state['authenticated']:
                     
                     success = send_message_to_db(sender_name, user_msg.strip(), current_time)
                     if success:
-        
                         st.rerun()
+
+        # --- CLEAR CHAT BUTTON FOR EVERYONE ---
+        # இந்த பட்டன் இருவருக்குமே (Akka மற்றும் Me) பொதுவானதாக கீழே காட்டும்.
+        st.markdown("---")
+        if st.button("🗑️ Clear Entire Chat History", type="secondary", use_container_width=True):
+            if clear_all_messages_from_db():
+                st.success("Chat history cleared successfully!")
+                time.sleep(0.5)
+                st.rerun()
+            else:
+                st.error("Failed to clear chat history.")
 
     # --- PAGE 5: GIFT ---
     elif st.session_state['page'] == 'gift':
