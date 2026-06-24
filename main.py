@@ -205,10 +205,32 @@ elif st.session_state['authenticated']:
     # --- PAGE 5: GIFT ---
     elif st.session_state['page'] == 'gift':
         st.title("🎁 A Special Gift For You, Akka!")
-        try:
-            st.image("gift_photo.jpg", caption="Happy Birthday Akkachi! 💖", use_container_width=True)
-        except Exception:
+        
+        # இன்னும் சீக்ரெட் கோடு போடவில்லை என்றால் லாக் பாக்ஸ் காட்டும்
+        if not st.session_state.get('gift_unlocked', False):
+            st.subheader("🔒 This page is locked!")
+            gift_password = st.text_input("Enter Secret Code to Unlock Gift:", type="password", key="gift_lock_input")
+            
+            if st.button("Unlock Gift 🔓", type="primary"):
+                if gift_password == "0000":  # உங்களுக்கு தேவையான கிப்ட் ரகசிய பாஸ்வேர்ட்டை இங்கே மாற்றலாம்
+                    st.session_state['gift_unlocked'] = True
+                    st.balloons()
+                    st.rerun()
+                else:
+                    st.error("Thப்பான குறியீடு! மீண்டும் முயற்சிக்கவும். 😜")
+        
+        # சரியான கோடு போட்ட பின் கிப்ட் படம் ஓப்பன் ஆகும்
+        else:
+            st.success("Unlocked successfully! 🎉")
             try:
-                st.image("gift_photo.jpeg", caption="Happy Birthday Akkachi! 💖", use_container_width=True)
+                st.image("gift_photo.jpg", caption="Happy Birthday Akkachi! 💖", use_container_width=True)
             except Exception:
-                st.image("https://images.unsplash.com/photo-1513201099705-a9746e1e201f", caption="Gift Box 🎁", use_container_width=True)
+                try:
+                    st.image("gift_photo.jpeg", caption="Happy Birthday Akkachi! 💖", use_container_width=True)
+                except Exception:
+                    st.image("https://images.unsplash.com/photo-1513201099705-a9746e1e201f", caption="Gift Box 🎁", use_container_width=True)
+            
+            # மீண்டும் லாக் செய்ய ஒரு பட்டன்
+            if st.button("Lock Again 🔒"):
+                st.session_state['gift_unlocked'] = False
+                st.rerun()
